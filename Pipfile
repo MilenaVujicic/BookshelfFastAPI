@@ -10,6 +10,8 @@ fastapi = "*"
 jinja2 = "*"
 aiofiles = "*"
 uvicorn = "*"
+sqlalchemy = "*"
+psycopg2 = "*"
 
 [requires]
 python_version = "3.8"
