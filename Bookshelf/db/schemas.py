@@ -19,6 +19,9 @@ class AuthorBase(BaseModel):
     surname: str
 
 
+class AuthorId(BaseModel):
+    id:int
+
 class AuthorCreate(AuthorBase):
     pass
 
@@ -32,7 +35,7 @@ class Author(AuthorBase):
 
 
 class PublisherBase(BaseModel):
-    name:str
+    name: str
 
 
 class PublisherCreate(PublisherBase):
@@ -42,6 +45,97 @@ class PublisherCreate(PublisherBase):
 class Publisher(PublisherBase):
     id: int
     owner_id: int
+
+    class Config:
+        orm_mode = True
+
+
+class ShelfBase(BaseModel):
+    name: str
+    description: str
+
+
+class ShelfCreate(BaseModel):
+    pass
+
+
+class ShelfId(ShelfBase):
+    id: int
+
+
+class Shelf(ShelfBase):
+    id: int
+    owner_id: int
+
+    class Config:
+        orm_mode = True
+
+
+class BookBase(BaseModel):
+    id: int
+    title: str
+    pages: int
+    description: str
+    isbn: str
+    read: bool
+    lent: bool
+    private: bool
+    cover: str
+
+
+class BookCreate(BookBase):
+    pass
+
+
+class Book(BookBase):
+    owner_id: int
+
+    class Config:
+        orm_mode = True
+
+
+class AuthorBookBase(BaseModel):
+    authorId: int
+    bookId: int
+
+
+class AuthorBookCreate(AuthorBookBase):
+    pass
+
+
+class AuthorBook(BaseModel):
+    id: int
+
+
+class ShelfBookBase(BaseModel):
+    bookId: int
+    shelfId: int
+
+
+class ShelfBookCreate(ShelfBookBase):
+    pass
+
+
+class ShelfBook(ShelfBookBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+
+class ReviewBase(BaseModel):
+    rating:int
+    content:str
+
+
+class ReviewCreate(ReviewBase):
+    pass
+
+
+class Review(ReviewBase):
+    id: int
+    reviewer_id:int
+    book_id:int
 
     class Config:
         orm_mode = True
@@ -73,7 +167,11 @@ class User(UserInDB):
     username: str
     first_name: str
     last_name: str
-    authors: List[Author] = []
+    user_authors: List[Author] = []
+    user_publishers: List[Publisher] = []
+    user_books: List[Book] = []
+    user_shelves: List[Shelf] = []
+    user_reviews: List[Review] = []
 
     class Config:
         orm_mode = True

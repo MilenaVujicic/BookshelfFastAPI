@@ -2,19 +2,17 @@ from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, DateTime, S
 from sqlalchemy.orm import relationship
 from .database import Base
 
-
 AuthorBook = Table('AuthorBook',
                    Base.metadata,
                    Column('id', Integer, primary_key=True),
-                   Column('authorId', Integer, ForeignKey('authors.id')),
-                   Column('bookId', Integer, ForeignKey('books.id')))
-
+                   Column('author_id', Integer, ForeignKey('authors.id')),
+                   Column('book_id', Integer, ForeignKey('books.id')))
 
 ShelfBook = Table('ShelfBook',
                   Base.metadata,
                   Column('id', Integer, primary_key=True),
-                  Column('shelfId', Integer, ForeignKey("shelves.id")),
-                  Column('bookId', Integer, ForeignKey("books.id")))
+                  Column('shelf_id', Integer, ForeignKey("shelves.id")),
+                  Column('book_id', Integer, ForeignKey("books.id")))
 
 
 class User(Base):
@@ -30,7 +28,8 @@ class User(Base):
 
     user_authors = relationship("Author", back_populates="author_owner")
     user_publishers = relationship("Publisher", back_populates="publisher_owner")
-    user_books = relationship("Book", back_populates="book_owner")
+    user_books = relationship("Book", back_populates="book_owner", foreign_keys='Book.owner')
+    user_lent_books = relationship("Book", back_populates="book_lent_to", foreign_keys='Book.lent_to_id')
     user_shelves = relationship("Shelf", back_populates="shelf_owner")
     user_reviews = relationship("Review", back_populates="review_owner")
 
@@ -42,7 +41,7 @@ class Author(Base):
     surname = Column(String, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
 
-    author_owner = relationship("User", back_populates="user_authors")
+    author_owner = relationship("User", back_populates="user_authors", lazy='joined')
     author_books = relationship("Book", secondary=AuthorBook, backref='authors_books')
 
 
@@ -53,6 +52,7 @@ class Publisher(Base):
     owner_id = Column(Integer, ForeignKey("users.id"))
 
     publisher_owner = relationship("User", back_populates="user_publishers")
+    publisher_books = relationship("Book", back_populates="book_publisher")
 
 
 class Book(Base):
@@ -66,11 +66,15 @@ class Book(Base):
     lent = Column(Boolean, default=False, index=True)
     private = Column(Boolean, default=False, index=True)
     cover = Column(String, index=True)
-    owner_id = Column(Integer, ForeignKey("users.id"))
+    owner = Column(Integer, ForeignKey("users.id"))
+    publisher = Column(Integer, ForeignKey("publishers.id"))
+    lent_to_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
-    book_owner = relationship("User", back_populates="user_books")
-    book_authors = relationship('Author', secondary=AuthorBook, backref='authors_books')
-    book_shelves = relationship('Shelf', secondary=ShelfBook, backref='shelves_books')
+    book_owner = relationship("User", back_populates="user_books", foreign_keys=[owner])
+    book_lent_to = relationship("User", back_populates="user_lent_books", foreign_keys=[lent_to_id])
+    book_publisher = relationship("Publisher", back_populates="publisher_books")
+    book_authors = relationship('Author', secondary=AuthorBook, backref='authors_books', lazy='dynamic')
+    book_shelves = relationship('Shelf', secondary=ShelfBook, backref='shelves_books', lazy='dynamic')
     book_reviews = relationship("Review", back_populates='book_review')
 
 
@@ -82,11 +86,11 @@ class Shelf(Base):
     owner_id = Column(Integer, ForeignKey("users.id"))
 
     shelf_owner = relationship('User', back_populates="user_shelves")
-    shelf_books = relationship('Book', secondary=ShelfBook, backref='shelves_books')
+    shelf_books = relationship('Book', secondary=ShelfBook, backref='shelves_books',lazy='joined')
 
 
 class Review(Base):
-    __tablename__='reviews'
+    __tablename__ = 'reviews'
     id = Column(Integer, primary_key=True, index=True)
     rating = Column(Integer, index=True)
     content = Column(String, index=True)
@@ -95,5 +99,3 @@ class Review(Base):
 
     review_owner = relationship('User', back_populates='user_reviews')
     book_review = relationship('Book', back_populates='book_reviews')
-
-
